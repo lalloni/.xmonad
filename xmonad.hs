@@ -29,44 +29,54 @@ modm = mod4Mask
 moda = mod1Mask
 
 main = do
-    xmonad $ xfceConfig
-        { modMask = modm
-        , workspaces = myWorkspaces
-        , layoutHook = myLayoutHook
-        , manageHook = myManageHook
-        }
-        `additionalKeys` 
-            [ ((moda,                 xK_Tab),   windows W.focusDown)
-            , ((modm .|. controlMask, xK_space), sendMessage NextLayout)
-            , ((modm,                 xK_Right), nextWS)
-            , ((modm,                 xK_Left),  prevWS)
-            , ((modm .|. shiftMask,   xK_Right), shiftToNext >> nextWS)
-            , ((modm .|. shiftMask,   xK_Left),  shiftToPrev >> prevWS)
-            , ((mod4Mask,             xK_s),     cycleRecentWindows [xK_Super_L] xK_s xK_w)
-            , ((modm .|. shiftMask,   xK_g),     gotoMenuArgs ["-b", "-l", "10"])
-            , ((modm .|. shiftMask,   xK_b),     bringMenuArgs ["-b", "-l", "10"])
-            , ((moda,                 xK_space), windowMenu)
-            , ((modm .|. controlMask, xK_x),     xmonadPrompt defaultXPConfig)
-            , ((modm .|. controlMask, xK_y),     shellPrompt defaultXPConfig)
-            , ((moda,                 xK_F4),    kill)
-            ]
-        `removeKeys`
-            [ (modm, xK_Tab) -- win+tab
-            , (modm, xK_space) -- reservada para kupfer
-            ]
+    xmonad $ xfceConfig { modMask = modm
+                        , workspaces = myWorkspaces
+                        , layoutHook = myLayoutHook
+                        , manageHook = myManageHook
+                        } 
+                        `additionalKeys` [ ((moda,                 xK_Tab),   windows W.focusDown)
+                                         , ((modm .|. controlMask, xK_space), sendMessage NextLayout)
+                                         , ((modm,                 xK_Right), nextWS)
+                                         , ((modm,                 xK_Left),  prevWS)
+                                         , ((modm .|. shiftMask,   xK_Right), shiftToNext >> nextWS)
+                                         , ((modm .|. shiftMask,   xK_Left),  shiftToPrev >> prevWS)
+                                         , ((mod4Mask,             xK_s),     cycleRecentWindows [xK_Super_L] xK_s xK_w)
+                                         , ((modm .|. shiftMask,   xK_g),     gotoMenuArgs ["-b", "-l", "10"])
+                                         , ((modm .|. shiftMask,   xK_b),     bringMenuArgs ["-b", "-l", "10"])
+                                         , ((moda,                 xK_space), windowMenu)
+                                         , ((modm .|. controlMask, xK_x),     xmonadPrompt defaultXPConfig)
+                                         , ((modm .|. controlMask, xK_y),     shellPrompt defaultXPConfig)
+                                         , ((moda,                 xK_F4),    kill)
+                                         ]
+                        `removeKeys` [ (modm, xK_Tab) -- win+tab
+                                     , (modm, xK_space) -- reservada para kupfer
+                                     ]
 
 myWorkspaces = ["dev", "mail"] ++ map show [1..6] ++ ["im"]
 
 myLayoutHook = avoidStruts $ smartBorders $ onWorkspace "im" im $ full ||| tiled ||| Mirror tiled
     where
-        full = tabbed shrinkText $ theme smallClean
+        full = tabbed shrinkText $ theme myTheme
         tiled = Tall 1 (5/100) (1/2)
         im = reflectHoriz $ withIM (1%5) (Role "buddy_list") Grid ||| Full
 
-myManageHook = composeAll 
-    [ className =? "Pidgin" --> doShift "im"
-    , className =? "Eclipse" --> doShift "dev"
-    , className =? "Thunderbird" --> doShift "mail"
-    , className =? "Xfce4-notifyd" --> doIgnore
-    ] <+> manageHook xfceConfig
+myManageHook = composeAll [ className =? "Pidgin" --> doShift "im"
+                          , className =? "Eclipse" --> doShift "dev"
+                          , className =? "Thunderbird" --> doShift "mail"
+                          , className =? "Xfce4-notifyd" --> doIgnore
+                          ] <+> manageHook xfceConfig
+
+myTheme = TI { themeName = "myTheme"
+             , theme     = defaultTheme { activeColor         = "#cccccc"
+                                        , inactiveColor       = "#222222"
+                                        , activeBorderColor   = "#cccccc"
+                                        , inactiveBorderColor = "#222222"
+                                        , activeTextColor     = "#222222"
+                                        , inactiveTextColor   = "#cccccc"
+                                        , decoHeight          = 14
+                                        , fontName            = "xft:Ubuntu-9:light"
+                                        , urgentColor         = "#882222"
+                                        , urgentTextColor     = "#ffffff"
+                                        }
+             }
 
