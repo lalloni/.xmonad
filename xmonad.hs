@@ -1,0 +1,72 @@
+import Data.Ratio ((%))
+import XMonad
+import XMonad.Actions.Commands
+import XMonad.Actions.CycleWindows
+import XMonad.Actions.CycleWS
+import XMonad.Actions.WindowBringer
+import XMonad.Actions.WindowMenu
+import XMonad.Config.Xfce
+import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.ManageHelpers
+import XMonad.Layout
+import XMonad.Layout.Grid
+import XMonad.Layout.IM
+import XMonad.Layout.Magnifier
+import XMonad.Layout.NoBorders
+import XMonad.Layout.PerWorkspace
+import XMonad.Layout.Reflect
+import XMonad.Layout.Tabbed
+import XMonad.Operations
+import XMonad.Prompt
+import XMonad.Prompt.XMonad
+import XMonad.Prompt.Shell
+import XMonad.Util.EZConfig
+import XMonad.Util.Themes
+import qualified XMonad.StackSet as W
+
+
+modm = mod4Mask
+moda = mod1Mask
+
+main = do
+    xmonad $ xfceConfig
+        { modMask = modm
+        , workspaces = myWorkspaces
+        , layoutHook = myLayoutHook
+        , manageHook = myManageHook
+        }
+        `additionalKeys` 
+            [ ((moda,                 xK_Tab),   windows W.focusDown)
+            , ((modm .|. controlMask, xK_space), sendMessage NextLayout)
+            , ((modm,                 xK_Right), nextWS)
+            , ((modm,                 xK_Left),  prevWS)
+            , ((modm .|. shiftMask,   xK_Right), shiftToNext >> nextWS)
+            , ((modm .|. shiftMask,   xK_Left),  shiftToPrev >> prevWS)
+            , ((mod4Mask,             xK_s),     cycleRecentWindows [xK_Super_L] xK_s xK_w)
+            , ((modm .|. shiftMask,   xK_g),     gotoMenuArgs ["-b", "-l", "10"])
+            , ((modm .|. shiftMask,   xK_b),     bringMenuArgs ["-b", "-l", "10"])
+            , ((moda,                 xK_space), windowMenu)
+            , ((modm .|. controlMask, xK_x),     xmonadPrompt defaultXPConfig)
+            , ((modm .|. controlMask, xK_y),     shellPrompt defaultXPConfig)
+            , ((moda,                 xK_F4),    kill)
+            ]
+        `removeKeys`
+            [ (modm, xK_Tab) -- win+tab
+            , (modm, xK_space) -- reservada para kupfer
+            ]
+
+myWorkspaces = ["dev", "mail"] ++ map show [1..6] ++ ["im"]
+
+myLayoutHook = avoidStruts $ smartBorders $ onWorkspace "im" im $ full ||| tiled ||| Mirror tiled
+    where
+        full = tabbed shrinkText $ theme smallClean
+        tiled = Tall 1 (5/100) (1/2)
+        im = reflectHoriz $ withIM (1%5) (Role "buddy_list") Grid ||| Full
+
+myManageHook = composeAll 
+    [ className =? "Pidgin" --> doShift "im"
+    , className =? "Eclipse" --> doShift "dev"
+    , className =? "Thunderbird" --> doShift "mail"
+    , className =? "Xfce4-notifyd" --> doIgnore
+    ] <+> manageHook xfceConfig
+
