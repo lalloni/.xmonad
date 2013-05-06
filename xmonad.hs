@@ -1,4 +1,6 @@
+import Data.Maybe
 import Data.Ratio ((%))
+
 import XMonad
 import XMonad.Actions.Commands
 import XMonad.Actions.CycleWindows
@@ -6,6 +8,7 @@ import XMonad.Actions.CycleWS
 import XMonad.Actions.WindowBringer
 import XMonad.Actions.WindowMenu
 import XMonad.Config.Xfce
+import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Layout
@@ -24,6 +27,9 @@ import XMonad.Util.EZConfig
 import XMonad.Util.Themes
 import qualified XMonad.StackSet as W
 
+import qualified DBus as D
+import qualified DBus.Client as D
+import qualified Codec.Binary.UTF8.String as UTF8
 
 modm = mod4Mask
 moda = mod1Mask
@@ -31,10 +37,13 @@ moda = mod1Mask
 baseConfig = xfceConfig
 
 main = do
-    xmonad $ baseConfig { modMask = modm
+    dbus <- D.connectSession
+    getWellKnownName dbus
+    xmonad $ baseConfig { modMask    = modm
                         , workspaces = myWorkspaces
                         , layoutHook = myLayoutHook
                         , manageHook = myManageHook
+                        , logHook    = myLogHook dbus
                         } 
                         `additionalKeys` (
                             [ ((moda,                 xK_Tab),   windows W.focusDown)
@@ -56,8 +65,12 @@ main = do
                                 , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]
                                 ]
                             )
-                        `removeKeys` [ (modm, xK_space) -- reservada para kupfer
+                        `removeKeys` [ (modm, xK_space) -- for kupfer
                                      ]
+    where
+        getWellKnownName dbus = do
+            D.requestName dbus (D.busName_ "org.xmonad.Log") [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
+            return ()
 
 myWorkspaces = ["dev", "mail"] ++ map show [1..6] ++ ["im", "log"]
 
@@ -87,3 +100,31 @@ myTheme = TI { themeName = "myTheme"
                                         }
              }
 
+myLogHook dbus = dynamicLogWithPP (prettyPrinter dbus)
+    where
+        prettyPrinter dbus = defaultPP { ppOutput   = dbusOutput dbus
+                                       , ppTitle    = pangoSanitize
+                                       , ppCurrent  = pangoColor "green" . wrap "[" "]" . pangoSanitize
+                                       , ppVisible  = pangoColor "yellow" . wrap "(" ")" . pangoSanitize
+                                       , ppHidden   = const ""
+                                       , ppUrgent   = pangoColor "red"
+                                       , ppLayout   = const ""
+                                       , ppSep      = " "
+                                       }
+        dbusOutput dbus str = do
+            let object = fromJust $ D.parseObjectPath "/org/xmonad/Log"
+            let interface = fromJust $ D.parseInterfaceName "org.xmonad.Log"
+            let member = fromJust $ D.parseMemberName "update"
+            let signal = (D.signal object interface member) { D.signalBody = [D.toVariant ("<b>" ++ (UTF8.decodeString str) ++ "</b>")] }
+            D.emit dbus signal
+        pangoColor fg = wrap left right
+            where
+                left  = "<span foreground=\"" ++ fg ++ "\">"
+                right = "</span>"
+        pangoSanitize = foldr sanitize ""
+            where
+                sanitize '>'  xs = "&gt;" ++ xs
+                sanitize '<'  xs = "&lt;" ++ xs
+                sanitize '\"' xs = "&quot;" ++ xs
+                sanitize '&'  xs = "&amp;" ++ xs
+                sanitize x    xs = x:xs
