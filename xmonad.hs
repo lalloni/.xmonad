@@ -51,14 +51,12 @@ main = do
                             , ((modm .|. controlMask, xK_y),     shellPrompt defaultXPConfig)
                             , ((moda,                 xK_F4),    kill)
                             ] 
-                            ++ 
-                            [ ((m .|. modm, k), windows $ f i) 
+                            ++  [ ((m .|. modm, k), windows $ f i) 
                                 | (i, k) <- zip myWorkspaces ([xK_1 .. xK_9] ++ [xK_0])
                                 , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]
-                            ]
-                        )
-                        `removeKeys` [ (modm, xK_Tab) -- win+tab
-                                     , (modm, xK_space) -- reservada para kupfer
+                                ]
+                            )
+                        `removeKeys` [ (modm, xK_space) -- reservada para kupfer
                                      ]
 
 myWorkspaces = ["dev", "mail"] ++ map show [1..6] ++ ["im", "log"]
