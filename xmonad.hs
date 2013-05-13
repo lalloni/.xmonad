@@ -85,6 +85,7 @@ myManageHook = composeAll [ className =? "Pidgin" --> doShift "im"
                           , className =? "Eclipse" --> doShift "dev"
                           , className =? "Thunderbird" --> doShift "mail"
                           , className =? "Xfce4-notifyd" --> doIgnore
+                          , className =? "Wrapper" --> doFloat
                           ] <+> manageHook baseConfig
 
 myStartupHook = startupHook baseConfig >> setWMName "LG3D"
