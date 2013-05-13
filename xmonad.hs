@@ -26,6 +26,7 @@ import XMonad.Prompt.XMonad
 import XMonad.Prompt.Shell
 import XMonad.Util.EZConfig
 import XMonad.Util.Themes
+
 import qualified XMonad.StackSet as W
 
 import qualified DBus as D
@@ -40,10 +41,11 @@ baseConfig = xfceConfig
 main = do
 --    dbus <- D.connectSession
 --    getWellKnownName dbus
-    xmonad $ baseConfig { modMask    = modm
-                        , workspaces = myWorkspaces
-                        , layoutHook = myLayoutHook
-                        , manageHook = myManageHook
+    xmonad $ baseConfig { modMask     = modm
+                        , workspaces  = myWorkspaces
+                        , layoutHook  = myLayoutHook
+                        , manageHook  = myManageHook
+                        , startupHook = myStartupHook
 --                        , logHook     = myLogHook dbus
                         } 
                         `additionalKeys` (
@@ -116,11 +118,12 @@ myLogHook dbus = dynamicLogWithPP (prettyPrinter dbus)
                                        , ppSep      = " "
                                        }
         dbusOutput dbus str = do
-            let object = fromJust $ D.parseObjectPath "/org/xmonad/Log"
-            let interface = fromJust $ D.parseInterfaceName "org.xmonad.Log"
-            let member = fromJust $ D.parseMemberName "update"
-            let signal = (D.signal object interface member) { D.signalBody = [D.toVariant ("<b>" ++ (UTF8.decodeString str) ++ "</b>")] }
             D.emit dbus signal
+                where 
+                    object = fromJust $ D.parseObjectPath "/org/xmonad/Log"
+                    interface = fromJust $ D.parseInterfaceName "org.xmonad.Log"
+                    member = fromJust $ D.parseMemberName "update"
+                    signal = (D.signal object interface member) { D.signalBody = [D.toVariant ("<b>" ++ (UTF8.decodeString str) ++ "</b>")] }
         pangoColor fg = wrap left right
             where
                 left  = "<span foreground=\"" ++ fg ++ "\">"
