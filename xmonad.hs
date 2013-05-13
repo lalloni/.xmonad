@@ -38,13 +38,13 @@ moda = mod1Mask
 baseConfig = xfceConfig
 
 main = do
-    dbus <- D.connectSession
-    getWellKnownName dbus
+--    dbus <- D.connectSession
+--    getWellKnownName dbus
     xmonad $ baseConfig { modMask    = modm
                         , workspaces = myWorkspaces
                         , layoutHook = myLayoutHook
                         , manageHook = myManageHook
-                        , logHook    = myLogHook dbus
+--                        , logHook     = myLogHook dbus
                         } 
                         `additionalKeys` (
                             [ ((moda,                 xK_Tab),   windows W.focusDown)
