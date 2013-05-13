@@ -11,6 +11,7 @@ import XMonad.Config.Xfce
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.SetWMName
 import XMonad.Layout
 import XMonad.Layout.Grid
 import XMonad.Layout.IM
@@ -85,6 +86,8 @@ myManageHook = composeAll [ className =? "Pidgin" --> doShift "im"
                           , className =? "Thunderbird" --> doShift "mail"
                           , className =? "Xfce4-notifyd" --> doIgnore
                           ] <+> manageHook baseConfig
+
+myStartupHook = startupHook baseConfig >> setWMName "LG3D"
 
 myTheme = TI { themeName = "myTheme"
              , theme     = defaultTheme { activeColor         = "#cccccc"
