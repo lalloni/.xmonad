@@ -73,7 +73,7 @@ main = do
             D.requestName dbus (D.busName_ "org.xmonad.Log") [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
             return ()
 
-myWorkspaces = ["dev", "mail"] ++ map show [1..6] ++ ["im", "log"]
+myWorkspaces = ["dev", "mail"] ++ map show [3..8] ++ ["im", "log"]
 
 myLayoutHook = avoidStruts $ smartBorders $ onWorkspace "im" im $ full ||| tiled ||| Mirror tiled
     where
