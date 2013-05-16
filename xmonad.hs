@@ -1,3 +1,5 @@
+{-# LANGUAGE NoMonomorphismRestriction #-}
+
 import Data.Maybe
 import Data.Ratio ((%))
 
@@ -5,6 +7,7 @@ import XMonad
 import XMonad.Actions.Commands
 import XMonad.Actions.CycleWindows
 import XMonad.Actions.CycleWS
+import XMonad.Actions.GridSelect
 import XMonad.Actions.WindowBringer
 import XMonad.Actions.WindowMenu
 import XMonad.Config.Xfce
@@ -27,14 +30,15 @@ import XMonad.Prompt.Shell
 import XMonad.Util.EZConfig
 import XMonad.Util.Themes
 
-import qualified XMonad.StackSet as W
-
+import qualified Data.Map as M
 import qualified DBus as D
 import qualified DBus.Client as D
 import qualified Codec.Binary.UTF8.String as UTF8
+import qualified XMonad.StackSet as W
 
 modm = mod4Mask
 moda = mod1Mask
+switchw = (moda, xK_Tab)
 
 baseConfig = xfceConfig
 
@@ -62,6 +66,7 @@ main = do
                             , ((modm .|. controlMask, xK_x),     xmonadPrompt defaultXPConfig)
                             , ((modm .|. controlMask, xK_y),     shellPrompt defaultXPConfig)
                             , ((moda,                 xK_F4),    kill)
+                            , ((modm,                 xK_Tab),   goToSelected gsConfig)
                             ] 
                             ++  [ ((m .|. modm, k), windows $ f i) 
                                 | (i, k) <- zip myWorkspaces ([xK_1 .. xK_9] ++ [xK_0])
@@ -74,6 +79,28 @@ main = do
         getWellKnownName dbus = do
             D.requestName dbus (D.busName_ "org.xmonad.Log") [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
             return ()
+        gsConfig = defaultGSConfig { gs_navigate = gsNavigation }
+            where
+                gsNavigation = makeXEventhandler $ shadowWithKeymap navKeyMap navDefaultHandler
+                    where 
+                        navKeyMap = M.fromList [ ((0, xK_Escape), cancel)
+                                               , ((0, xK_Return), select)
+                                               , ((0, xK_slash) , substringSearch gsNavigation)
+                                               , ((0, xK_Left)  , move (-1,0)  >> gsNavigation)
+                                               , ((0, xK_h)     , move (-1,0)  >> gsNavigation)
+                                               , ((0, xK_Right) , move (1,0)   >> gsNavigation)
+                                               , ((0, xK_l)     , move (1,0)   >> gsNavigation)
+                                               , ((0, xK_Down)  , move (0,1)   >> gsNavigation)
+                                               , ((0, xK_j)     , move (0,1)   >> gsNavigation)
+                                               , ((0, xK_Up)    , move (0,-1)  >> gsNavigation)
+                                               , ((0, xK_y)     , move (-1,-1) >> gsNavigation)
+                                               , ((0, xK_i)     , move (1,-1)  >> gsNavigation)
+                                               , ((0, xK_n)     , move (-1,1)  >> gsNavigation)
+                                               , ((0, xK_m)     , move (1,-1)  >> gsNavigation)
+                                               , ((0, xK_space) , setPos (0,0) >> gsNavigation)
+                                               , ((modm, xK_Tab), moveNext     >> gsNavigation)
+                                               ]
+                        navDefaultHandler = const gsNavigation
 
 myWorkspaces = ["dev", "mail"] ++ map show [3..8] ++ ["im", "log"]
 
