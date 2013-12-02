@@ -45,12 +45,13 @@ baseConfig = xfceConfig
 main = do
 --    dbus <- D.connectSession
 --    getWellKnownName dbus
-    xmonad $ baseConfig { modMask     = modm
-                        , workspaces  = myWorkspaces
-                        , layoutHook  = myLayoutHook
-                        , manageHook  = myManageHook
-                        , startupHook = myStartupHook
---                        , logHook     = myLogHook dbus
+    xmonad $ baseConfig { modMask           = modm
+                        , workspaces        = myWorkspaces
+                        , layoutHook        = myLayoutHook
+                        , manageHook        = myManageHook
+                        , startupHook       = myStartupHook
+--                        , logHook           = myLogHook dbus
+                        , focusFollowsMouse = False
                         } 
                         `additionalKeys` (
                             [ ((moda,                 xK_Tab),   windows W.focusDown)
@@ -67,6 +68,7 @@ main = do
                             , ((modm .|. controlMask, xK_y),     shellPrompt defaultXPConfig)
                             , ((moda,                 xK_F4),    kill)
                             , ((modm,                 xK_Tab),   goToSelected gsConfig)
+                            , ((modm .|. controlMask, xK_t),     withFocused $ windows . W.sink)
                             ] 
                             ++  [ ((m .|. modm, k), windows $ f i) 
                                 | (i, k) <- zip myWorkspaces ([xK_1 .. xK_9] ++ [xK_0])
